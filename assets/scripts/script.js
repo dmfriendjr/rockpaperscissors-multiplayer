@@ -17,7 +17,12 @@ class RockPaperScissorsGame {
 	constructor() {
 		this.playerName;
 		this.playerId;
+		this.playerChoice;
+		this.playerMadeChoice = false;
 		this.opponentId;
+		this.opponentName;
+		this.opponentChoice;
+		this.opponentMadeChoice = false;
 		this.opponentInitialized = false;
 		this.inMatch = false;
 
@@ -42,15 +47,37 @@ class RockPaperScissorsGame {
 
 	opponentStatusUpdated(snapshot) {
 		console.log('Opponent data', snapshot.val());
-		if (snapshot.val() === null) {
+		if (snapshot.val() === null && this.opponentInitialized) {
+			//Opponent was initialized but has now disconnected
+			$(`#${this.opponentId}Name`).text('Disconnected!');			
+			this.opponentInitialized = false;
+			return;
+		} else if (snapshot.val() === null) {
 			//No opponent has connected yet
 			return;
 		}
 
 		if (!this.opponentInitialized) {
-			//Opponent has connected, update UI
-			$(`#${this.opponentId}Name`).text(snapshot.val().name);
+			//Opponent has connected, update UI and variables
+			this.opponentName = snapshot.val().name;
+			$(`#${this.opponentId}Name`).text(this.opponentName);
 			this.opponentInitialized = true;
+			//Hide opponent input buttons
+			$(`#${this.opponentId}InputWrapper`).hide();
+			//Now listen for our input events
+			$(`.${this.playerId}Input`).on('click', this.handleInput.bind(this));
+		} else {
+			//Opponent initialized, listening for opponent to make their choice
+			if (snapshot.child('choice').exists()) {
+				//Opponent has chosen
+				console.log('Opponent picked option', snapshot.val().choice);
+				this.opponentChoice = snapshot.val().choice;
+				this.opponentMadeChoice = true;
+
+				if (this.playerMadeChoice) {
+					this.determineWinner();
+				}
+			}
 		}
 	}
 	
@@ -92,6 +119,50 @@ class RockPaperScissorsGame {
 			//Remove our data from database
 			database.ref('players/' + this.playerId).remove();
 		}
+	}
+
+	handleInput(event) {
+		this.playerChoice = $(event.target).attr('data-choice');	
+
+		database.ref(`players/${this.playerId}`).update({
+			choice: this.playerChoice
+		});
+
+		//We chose, hide our input
+		$(`#${this.playerId}InputWrapper`).hide();
+		
+		this.playerMadeChoice = true;
+
+		if (this.opponentMadeChoice) {
+			//Opponent has made choice already
+			this.determineWinner();
+		}
+	}
+
+	determineWinner() {
+		if ((this.playerChoice === 'rock' && this.opponentChoice === 'scissors') ||
+			(this.playerChoice === 'paper' && this.opponentChoice === 'rock') ||
+			(this.playerChoice === 'scissors' && this.opponentChoice === 'paper')
+		) {
+			//Player wins
+			console.log('You win!', this.playerChoice, 'beats', this.opponentChoice);
+			$('#winnerName').text(this.playerName);
+		} else {
+			//Opponent wins
+			console.log('You lose!', this.opponentChoice, 'beats', this.playerChoice);
+			$('#winnerName').text(this.opponentName);
+		}
+
+		//Reset player choice on database
+		database.ref(`players/${this.playerId}/choice`).remove();
+
+		//Reset variables
+		this.opponentMadeChoice = false;
+		this.playerMadeChoice = false;
+
+		//Reset UI to allow next round
+		$(`#${this.playerId}InputWrapper`).show();
+		
 	}
 }
 
