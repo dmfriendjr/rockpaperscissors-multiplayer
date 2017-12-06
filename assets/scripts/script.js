@@ -19,6 +19,8 @@ class RockPaperScissorsGame {
 		this.playerId;
 		this.playerChoice;
 		this.playerMadeChoice = false;
+		this.playerWins = 0;
+		this.playerLosses = 0;
 		this.opponentId;
 		this.opponentName;
 		this.opponentChoice;
@@ -62,11 +64,17 @@ class RockPaperScissorsGame {
 			this.opponentName = snapshot.val().name;
 			$(`#${this.opponentId}Name`).text(this.opponentName);
 			this.opponentInitialized = true;
+			$(`#${this.opponentId}WinsDisplay`).text(snapshot.val().wins);
+			$(`#${this.opponentId}LossesDisplay`).text(snapshot.val().losses);
 			//Hide opponent input buttons
 			$(`#${this.opponentId}InputWrapper`).hide();
 			//Now listen for our input events
 			$(`.${this.playerId}Input`).on('click', this.handleInput.bind(this));
 		} else {
+			//Update wins/losses display for opponent
+			$(`#${this.opponentId}WinsDisplay`).text(snapshot.val().wins);
+			$(`#${this.opponentId}LossesDisplay`).text(snapshot.val().losses);
+
 			//Opponent initialized, listening for opponent to make their choice
 			if (snapshot.child('choice').exists()) {
 				//Opponent has chosen
@@ -111,6 +119,9 @@ class RockPaperScissorsGame {
 			losses: 0
 		});
 
+		//Update UI
+		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
+		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
 		$(`#${playerNumber}Name`).text(name);
 	}
 
@@ -131,7 +142,11 @@ class RockPaperScissorsGame {
 		//We chose, hide our input
 		$(`#${this.playerId}InputWrapper`).hide();
 		
+		//Clear win message from last round
+		$('#winnerMessage').empty();
+
 		this.playerMadeChoice = true;
+
 
 		if (this.opponentMadeChoice) {
 			//Opponent has made choice already
@@ -146,11 +161,15 @@ class RockPaperScissorsGame {
 		) {
 			//Player wins
 			console.log('You win!', this.playerChoice, 'beats', this.opponentChoice);
-			$('#winnerName').text(this.playerName);
+			$('#winnerMessage').text(`${this.playerName} Wins!`);
+			//Increase wins for player
+			this.playerWins++;
 		} else {
 			//Opponent wins
 			console.log('You lose!', this.opponentChoice, 'beats', this.playerChoice);
-			$('#winnerName').text(this.opponentName);
+			$('#winnerMessage').text(`${this.opponentName} Wins!`);
+			//Increase losses for player
+			this.playerLosses++;
 		}
 
 		//Reset player choice on database
@@ -159,6 +178,15 @@ class RockPaperScissorsGame {
 		//Reset variables
 		this.opponentMadeChoice = false;
 		this.playerMadeChoice = false;
+
+		//Update wins and losses
+		database.ref(`players/${this.playerId}`).update({
+				wins: this.playerWins,
+				losses: this.playerLosses 
+		});
+
+		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
+		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
 
 		//Reset UI to allow next round
 		$(`#${this.playerId}InputWrapper`).show();
