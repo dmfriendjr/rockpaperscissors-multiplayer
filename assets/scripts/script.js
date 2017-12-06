@@ -109,7 +109,7 @@ class RockPaperScissorsGame {
 			}
 			//Check for new chat messages
 			if (snapshot.child('chatMessage').exists()) {
-				this.recieveChatMessage(snapshot.val().chatMessage);
+				this.displayChatMessage(snapshot.val().chatMessage);
 				snapshot.child('chatMessage').getRef().remove();
 			}
 		}
@@ -122,43 +122,37 @@ class RockPaperScissorsGame {
 		$('.p2PlayArea').hide();
 
 		//Get open matches
-		let matchFound = false;
 		database.ref('openMatches').once('value').then((snapshot) => {
 			if (snapshot.val() === null) {
-				console.log('There are no open matches, need to make new');
+				//Create match ID and join as p1
 				this.matchId = database.ref().child('openMatches').push().key;
-				this.initializePlayer(this.playerName, 'p1', this.matchId);
-				this.opponentId = 'p2';
-				database.ref(`openMatches/` + this.matchId + `/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));	
-				matchFound = true;
+				this.joinMatch('p1', 'p2');		
 			} else {
-
+				let matchFound = false;
+				//Search openMatches for one we can join
 				database.ref().child('openMatches').once('value').then((snapshot) => {
 					snapshot.forEach((childSnapshot) => {
-						console.log(childSnapshot.child('players/p2').exists());
 						if (childSnapshot.child('players/p2').exists() === false) {
-							//We can join this match
+							//We can join this match as p2
 							this.matchId = childSnapshot.key;
-							this.initializePlayer(this.playerName, 'p2', this.matchId);
-							this.opponentId = 'p1';
-							database.ref(`openMatches/` + this.matchId + `/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));		
+							this.joinMatch('p2', 'p1');
 							matchFound = true;
-							console.log('Found a match');
 						}
 					});
 					if (!matchFound) {
-						console.log('Match was not found, force creating');
 						//No open matches found, make new match
 						this.matchId = database.ref().child('openMatches').push().key;
-						this.initializePlayer(this.playerName, 'p1', this.matchId);
-						this.opponentId = 'p2';
-						database.ref(`openMatches/` + this.matchId + `/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));		
+						this.joinMatch('p1', 'p2');		
 					}
 				});
 			}
 		});
+	}
 
-
+	joinMatch(playerId, opponentId) {
+		this.initializePlayer(this.playerName, playerId, this.matchId);
+		this.opponentId = opponentId;
+		database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));		
 	}
 
 	initializePlayer(name, playerId, matchId) {
@@ -204,7 +198,7 @@ class RockPaperScissorsGame {
 		
 
 		if (this.opponentMadeChoice) {
-			//Opponent has made choice already
+			//Opponent has made choice already, decide winner
 			this.determineWinner();
 		}
 	}
@@ -217,10 +211,6 @@ class RockPaperScissorsGame {
 			chatMessage: message
 		});
 
-		this.displayChatMessage(message);
-	}
-
-	recieveChatMessage(message) {
 		this.displayChatMessage(message);
 	}
 
