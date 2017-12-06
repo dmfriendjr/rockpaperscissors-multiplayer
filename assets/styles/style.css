@@ -1,1 +1,11 @@
+#chatDisplay {
+	height: 150px;
+}
 
+#chatDisplay {
+	overflow-y: auto;
+}
+
+.chatMessage {
+	margin: 0;
+}

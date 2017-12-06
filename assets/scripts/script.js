@@ -34,9 +34,23 @@ class RockPaperScissorsGame {
 		$('#nameInputSubmit').on('click', (event) => {
 			event.preventDefault();
 
-			$('#nameInputForm').hide();
 			this.playerName = $('#nameInput').val();
+			
+			if (this.playerName.length === 0) {
+				//Must enter valid name, can't be blank
+				return;
+			}
+
+			$('#nameInputForm').hide();			
 			this.checkForExistingMatch();	
+		});
+
+		$('#chatInputSubmit').on('click', (event) => {
+			event.preventDefault();
+
+			let chatMessage = $('#chatInput').val();
+			$('#chatInput').val('');
+			this.sendChatMessage(chatMessage);
 		});
 
 		$(window).on('unload', () => {
@@ -88,6 +102,11 @@ class RockPaperScissorsGame {
 					this.determineWinner();
 				}
 			}
+			//Check for new chat messages
+			if (snapshot.child('chatMessage').exists()) {
+				this.recieveChatMessage(snapshot.val().chatMessage);
+				snapshot.child('chatMessage').getRef().remove();
+			}
 		}
 	}
 	
@@ -137,11 +156,11 @@ class RockPaperScissorsGame {
 
 	}
 
-	initializePlayer(name, playerNumber, matchId) {
+	initializePlayer(name, playerId, matchId) {
 		this.inMatch = true;
-		this.playerId = playerNumber;
+		this.playerId = playerId;
 
-		database.ref('openMatches/' + matchId + '/players/' + playerNumber).set(
+		database.ref('openMatches/' + matchId + '/players/' + this.playerId).set(
 		{
 			name: name,
 			wins: 0,
@@ -152,13 +171,14 @@ class RockPaperScissorsGame {
 		$(`.${this.playerId}PlayArea`).show();
 		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
 		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
-		$(`#${playerNumber}Name`).text(name);
+		$(`#${this.playerId}Name`).text(name);
 	}
 
 	disconnect() {
+		console.log('disconnecting');
 		if (this.inMatch) {
 			//Remove our data from database
-			database.ref('players/' + this.playerId).remove();
+			database.ref('openMatches/' + this.matchId + '/players/' + this.playerId).remove();
 		}
 	}
 
@@ -182,6 +202,31 @@ class RockPaperScissorsGame {
 			//Opponent has made choice already
 			this.determineWinner();
 		}
+	}
+
+	sendChatMessage(message) {
+		message = `${this.playerName}: ${message}`;
+
+
+		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update({
+			chatMessage: message
+		});
+
+		this.displayChatMessage(message);
+	}
+
+	recieveChatMessage(message) {
+		this.displayChatMessage(message);
+	}
+
+	displayChatMessage(message) {
+		let newMessage = $('<p>', {
+			'class': 'chatMessage',
+			text: message
+		});	
+
+		$('#chatDisplay').append(newMessage);
+		$('#chatDisplay').scrollTop($('#chatDisplay')[0].scrollHeight);		
 	}
 
 	determineWinner() {
@@ -209,14 +254,14 @@ class RockPaperScissorsGame {
 		$(`#${this.opponentId}ChoiceDisplay`).text(this.opponentChoice);
 
 		//Reset player choice on database
-		database.ref(`openMatches/` + matchId + `/players/${this.playerId}/choice`).remove();
+		database.ref(`openMatches/` + this.matchId + `/players/${this.playerId}/choice`).remove();
 
 		//Reset variables
 		this.opponentMadeChoice = false;
 		this.playerMadeChoice = false;
 
 		//Update wins and losses
-		database.ref(`openMatches/` + matchId + `/players/${this.playerId}`).update({
+		database.ref(`openMatches/` + this.matchId + `/players/${this.playerId}`).update({
 				wins: this.playerWins,
 				losses: this.playerLosses 
 		});
