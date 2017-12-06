@@ -23,12 +23,13 @@
 				<div class="form-group row" id="nameInputForm">
 					<label for="nameInput">Enter Name</label>
 					<input type="text" class="form-control" id="nameInput">
-					<button type="submit" class="btn btn-primary" id="nameInputSubmit">Submit</button>				
+					<button type="submit" class="btn btn-primary" id="nameInputSubmit">Play!</button>				
 				</div>
 			</form>
 		</div>
-		<div class="row">
-			<div class="col-sm">
+
+		<div class="row playArea">
+			<div class="col-sm p1PlayArea">
 				<h2 id="p1Name"></h2>
 				<h3>Wins:<span id='p1WinsDisplay'></span></h3>
 				<h3>Losses:<span id='p1LossesDisplay'></span></h3>
@@ -42,11 +43,12 @@
 				<h2>Results</h2>
 				<div class="row">
 					<div class="col-sm">
+						<h2><span id="p1ChoiceDisplay"></span> vs. <span id="p2ChoiceDisplay"></span></h2>
 						<h2 id="winnerMessage"></h2>
 					</div>
 				</div>
 			</div>
-			<div class="col-sm">
+			<div class="col-sm p2PlayArea">
 				<h2 id="p2Name"></h2>
 				<h3>Wins:<span id='p2WinsDisplay'></span></h3>
 				<h3>Losses:<span id='p2LossesDisplay'></span></h3>

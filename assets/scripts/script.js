@@ -28,13 +28,13 @@ class RockPaperScissorsGame {
 		this.opponentInitialized = false;
 		this.inMatch = false;
 
+		$('.playArea').hide();
+
 		$('#nameInputSubmit').on('click', (event) => {
 			event.preventDefault();
-			//Hide name input
+
 			$('#nameInputForm').hide();
-
 			this.playerName = $('#nameInput').val();
-
 			this.checkForExistingMatch();	
 		});
 
@@ -66,6 +66,7 @@ class RockPaperScissorsGame {
 			this.opponentInitialized = true;
 			$(`#${this.opponentId}WinsDisplay`).text(snapshot.val().wins);
 			$(`#${this.opponentId}LossesDisplay`).text(snapshot.val().losses);
+			$(`.${this.opponentId}PlayArea`).show();
 			//Hide opponent input buttons
 			$(`#${this.opponentId}InputWrapper`).hide();
 			//Now listen for our input events
@@ -90,17 +91,25 @@ class RockPaperScissorsGame {
 	}
 	
 	checkForExistingMatch(playerName) {
+		$('.playArea').show();
+		//Hide each player area until match is determined
+		$('.p1PlayArea').hide();
+		$('.p2PlayArea').hide();
+
 		database.ref('players/p1').once('value').then((snapshot) => {
 			if (snapshot.val() === null) {
-				//We are the first player
+				//We are the first player, no match yet
 				this.playerId = 'p1';
 				this.opponentId = 'p2';
+				$('.p1PlayArea').show();
 			} else {
-				//We are the second player
+				//We are the second player, have a match
 				this.playerId = 'p2';
 				this.opponentId = 'p1';
 				//Need to display first players name
 				$('#p1Name').text(snapshot.val().name);
+				$('.p1PlayArea').show();
+				$('.p2PlayArea').show();
 			}
 
 			this.initializePlayer(this.playerName, this.playerId);	
@@ -146,7 +155,7 @@ class RockPaperScissorsGame {
 		$('#winnerMessage').empty();
 
 		this.playerMadeChoice = true;
-
+		
 
 		if (this.opponentMadeChoice) {
 			//Opponent has made choice already
@@ -155,22 +164,28 @@ class RockPaperScissorsGame {
 	}
 
 	determineWinner() {
-		if ((this.playerChoice === 'rock' && this.opponentChoice === 'scissors') ||
+		if (this.playerChoice === this.opponentChoice) {
+			//Draw
+			$('#winnerMessage').text('Draw!');
+		}
+		else if ((this.playerChoice === 'rock' && this.opponentChoice === 'scissors') ||
 			(this.playerChoice === 'paper' && this.opponentChoice === 'rock') ||
 			(this.playerChoice === 'scissors' && this.opponentChoice === 'paper')
 		) {
 			//Player wins
-			console.log('You win!', this.playerChoice, 'beats', this.opponentChoice);
 			$('#winnerMessage').text(`${this.playerName} Wins!`);
 			//Increase wins for player
 			this.playerWins++;
 		} else {
 			//Opponent wins
-			console.log('You lose!', this.opponentChoice, 'beats', this.playerChoice);
 			$('#winnerMessage').text(`${this.opponentName} Wins!`);
 			//Increase losses for player
 			this.playerLosses++;
 		}
+
+		//Show player choices
+		$(`#${this.playerId}ChoiceDisplay`).text(this.playerChoice);
+		$(`#${this.opponentId}ChoiceDisplay`).text(this.opponentChoice);
 
 		//Reset player choice on database
 		database.ref(`players/${this.playerId}/choice`).remove();
