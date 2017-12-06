@@ -49,6 +49,11 @@ class RockPaperScissorsGame {
 			event.preventDefault();
 
 			let chatMessage = $('#chatInput').val();
+			
+			if (chatMessage.length === 0) {
+				return;
+			}
+
 			$('#chatInput').val('');
 			this.sendChatMessage(chatMessage);
 		});
