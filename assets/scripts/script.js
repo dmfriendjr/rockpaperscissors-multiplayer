@@ -16,6 +16,7 @@ var database = firebase.database();
 class RockPaperScissorsGame {
 	constructor() {
 		this.playerName;
+		this.matchId;
 		this.playerId;
 		this.playerChoice;
 		this.playerMadeChoice = false;
@@ -90,38 +91,57 @@ class RockPaperScissorsGame {
 		}
 	}
 	
-	checkForExistingMatch(playerName) {
+	checkForExistingMatch() {
 		$('.playArea').show();
 		//Hide each player area until match is determined
 		$('.p1PlayArea').hide();
 		$('.p2PlayArea').hide();
 
-		database.ref('players/p1').once('value').then((snapshot) => {
+		//Get open matches
+		let matchFound = false;
+		database.ref('openMatches').once('value').then((snapshot) => {
 			if (snapshot.val() === null) {
-				//We are the first player, no match yet
-				this.playerId = 'p1';
+				console.log('There are no open matches, need to make new');
+				this.matchId = database.ref().child('openMatches').push().key;
+				this.initializePlayer(this.playerName, 'p1', this.matchId);
 				this.opponentId = 'p2';
-				$('.p1PlayArea').show();
+				database.ref(`openMatches/` + this.matchId + `/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));	
+				matchFound = true;
 			} else {
-				//We are the second player, have a match
-				this.playerId = 'p2';
-				this.opponentId = 'p1';
-				//Need to display first players name
-				$('#p1Name').text(snapshot.val().name);
-				$('.p1PlayArea').show();
-				$('.p2PlayArea').show();
-			}
 
-			this.initializePlayer(this.playerName, this.playerId);	
-			//Listen for changes in opponent data
-			database.ref(`players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));
+				database.ref().child('openMatches').once('value').then((snapshot) => {
+					snapshot.forEach((childSnapshot) => {
+						console.log(childSnapshot.child('players/p2').exists());
+						if (childSnapshot.child('players/p2').exists() === false) {
+							//We can join this match
+							this.matchId = childSnapshot.key;
+							this.initializePlayer(this.playerName, 'p2', this.matchId);
+							this.opponentId = 'p1';
+							database.ref(`openMatches/` + this.matchId + `/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));		
+							matchFound = true;
+							console.log('Found a match');
+						}
+					});
+					if (!matchFound) {
+						console.log('Match was not found, force creating');
+						//No open matches found, make new match
+						this.matchId = database.ref().child('openMatches').push().key;
+						this.initializePlayer(this.playerName, 'p1', this.matchId);
+						this.opponentId = 'p2';
+						database.ref(`openMatches/` + this.matchId + `/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));		
+					}
+				});
+			}
 		});
+
+
 	}
 
-	initializePlayer(name, playerNumber) {
+	initializePlayer(name, playerNumber, matchId) {
 		this.inMatch = true;
+		this.playerId = playerNumber;
 
-		database.ref('players/' + playerNumber).set(
+		database.ref('openMatches/' + matchId + '/players/' + playerNumber).set(
 		{
 			name: name,
 			wins: 0,
@@ -129,6 +149,7 @@ class RockPaperScissorsGame {
 		});
 
 		//Update UI
+		$(`.${this.playerId}PlayArea`).show();
 		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
 		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
 		$(`#${playerNumber}Name`).text(name);
@@ -144,7 +165,7 @@ class RockPaperScissorsGame {
 	handleInput(event) {
 		this.playerChoice = $(event.target).attr('data-choice');	
 
-		database.ref(`players/${this.playerId}`).update({
+		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update({
 			choice: this.playerChoice
 		});
 
@@ -188,14 +209,14 @@ class RockPaperScissorsGame {
 		$(`#${this.opponentId}ChoiceDisplay`).text(this.opponentChoice);
 
 		//Reset player choice on database
-		database.ref(`players/${this.playerId}/choice`).remove();
+		database.ref(`openMatches/` + matchId + `/players/${this.playerId}/choice`).remove();
 
 		//Reset variables
 		this.opponentMadeChoice = false;
 		this.playerMadeChoice = false;
 
 		//Update wins and losses
-		database.ref(`players/${this.playerId}`).update({
+		database.ref(`openMatches/` + matchId + `/players/${this.playerId}`).update({
 				wins: this.playerWins,
 				losses: this.playerLosses 
 		});
