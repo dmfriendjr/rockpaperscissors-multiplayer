@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<script src="https://www.gstatic.com/firebasejs/4.7.0/firebase.js"></script>
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+	<link rel="stylesheet" href="./assets/styles/style.css">
+	<title>Rock Paper Scissors Multiplayer</title>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<nav class="navbar navbar">
+				<span class="navbar-brand mb-0 h1">Rock Paper Scissors</span>
+			</nav>
+		</div>
+
+		<div class="row">
+			<form>
+				<div class="form-group row" id="nameInputForm">
+					<label for="nameInput">Enter Name</label>
+					<input type="text" class="form-control" id="nameInput">
+					<button type="submit" class="btn btn-primary" id="nameInputSubmit">Submit</button>				
+				</div>
+			</form>
+		</div>
+		<div class="row">
+			<div class="col-sm">
+				<h2 id="p1Name"></h2>
+				<button type="button" class="btn btn-primary p1Input" data-choice="rock">Rock</button>
+				<button type="button" class="btn btn-primary p1Input" data-choice="paper">Paper</button>
+				<button type="button" class="btn btn-primary p1Input" data-choice="scissors">Scissors</button>
+			</div>
+			<div class="col-sm">
+				<h2>Results</h2>
+				<div class="row">
+					<div class="col-sm">
+						<h2>Player Winner!</h2>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm">
+				<h2 id="p2Name"></h2>
+				<button type="button" class="btn btn-primary p2Input" data-choice="rock">Rock</button>
+				<button type="button" class="btn btn-primary p2Input" data-choice="paper">Paper</button>
+				<button type="button" class="btn btn-primary p2Input" data-choice="scissors">Scissors</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+	<script src="./assets/scripts/script.js"></script>
+</body>
+</html>
