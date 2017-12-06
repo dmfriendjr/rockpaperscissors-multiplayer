@@ -63,10 +63,6 @@ class RockPaperScissorsGame {
 		});
 	}
 
-	playerStatusUpdated(snapshot) {
-		console.log(snapshot.ref(`${this.opponentId}`).val());
-	}
-
 	opponentStatusUpdated(snapshot) {
 		console.log('Opponent data', snapshot.val());
 		if (snapshot.val() === null && this.opponentInitialized) {
@@ -82,20 +78,14 @@ class RockPaperScissorsGame {
 		if (!this.opponentInitialized) {
 			//Opponent has connected, update UI and variables
 			this.opponentName = snapshot.val().name;
-			$(`#${this.opponentId}Name`).text(this.opponentName);
-			this.opponentInitialized = true;
-			$(`#${this.opponentId}WinsDisplay`).text(snapshot.val().wins);
-			$(`#${this.opponentId}LossesDisplay`).text(snapshot.val().losses);
+			$(`#${this.opponentId}Name`).text(this.opponentName);		
 			$(`.${this.opponentId}PlayArea`).show();
 			//Hide opponent input buttons
 			$(`#${this.opponentId}InputWrapper`).hide();
 			//Now listen for our input events
 			$(`.${this.playerId}Input`).on('click', this.handleInput.bind(this));
+			this.opponentInitialized = true;
 		} else {
-			//Update wins/losses display for opponent
-			$(`#${this.opponentId}WinsDisplay`).text(snapshot.val().wins);
-			$(`#${this.opponentId}LossesDisplay`).text(snapshot.val().losses);
-
 			//Opponent initialized, listening for opponent to make their choice
 			if (snapshot.child('choice').exists()) {
 				//Opponent has chosen
@@ -113,6 +103,18 @@ class RockPaperScissorsGame {
 				snapshot.child('chatMessage').getRef().remove();
 			}
 		}
+
+		this.updateOpponentDisplay(snapshot);
+	}
+
+	updateOpponentDisplay(snapshot) {
+		$(`#${this.opponentId}WinsDisplay`).text(snapshot.val().wins);
+		$(`#${this.opponentId}LossesDisplay`).text(snapshot.val().losses);
+	}
+
+	updatePlayerDisplay() {
+		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
+		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
 	}
 	
 	checkForExistingMatch() {
@@ -168,9 +170,8 @@ class RockPaperScissorsGame {
 
 		//Update UI
 		$(`.${this.playerId}PlayArea`).show();
-		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
-		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
 		$(`#${this.playerId}Name`).text(name);
+		this.updatePlayerDisplay();
 	}
 
 	disconnect() {
@@ -235,12 +236,10 @@ class RockPaperScissorsGame {
 		) {
 			//Player wins
 			$('#winnerMessage').text(`${this.playerName} Wins!`);
-			//Increase wins for player
 			this.playerWins++;
 		} else {
 			//Opponent wins
 			$('#winnerMessage').text(`${this.opponentName} Wins!`);
-			//Increase losses for player
 			this.playerLosses++;
 		}
 
@@ -261,8 +260,7 @@ class RockPaperScissorsGame {
 				losses: this.playerLosses 
 		});
 
-		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
-		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
+		this.updatePlayerDisplay();
 
 		//Reset UI to allow next round
 		$(`#${this.playerId}InputWrapper`).show();
