@@ -63,6 +63,108 @@ class RockPaperScissorsGame {
 		});
 	}
 
+	updateOpponentDisplay(snapshot) {
+		$(`#${this.opponentId}WinsDisplay`).text(snapshot.val().wins);
+		$(`#${this.opponentId}LossesDisplay`).text(snapshot.val().losses);
+	}
+
+	updatePlayerDisplay() {
+		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
+		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
+	}
+	
+	initializePlayer(name, playerId, matchId) {
+		this.inMatch = true;
+		this.playerId = playerId;
+
+		database.ref('openMatches/' + matchId + '/players/' + this.playerId).set(
+		{
+			name: name,
+			wins: 0,
+			losses: 0
+		});
+
+		//Update UI
+		$(`.${this.playerId}PlayArea`).show();
+		$(`#${this.playerId}Name`).text(name);
+		this.updatePlayerDisplay();
+	}
+
+	handleInput(event) {
+		this.playerChoice = $(event.target).attr('data-choice');	
+
+		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update({
+			choice: this.playerChoice
+		});
+
+		//We chose, hide our input
+		$(`#${this.playerId}InputWrapper`).hide();
+		
+		//Clear win message from last round
+		$('#winnerMessage').empty();
+
+		this.playerMadeChoice = true;
+		
+
+		if (this.opponentMadeChoice) {
+			//Opponent has made choice already, decide winner
+			this.determineWinner();
+		}
+	}
+
+	displayChatMessage(message) {
+		let newMessage = $('<p>', {
+			'class': 'chatMessage',
+			text: message
+		});	
+
+		$('#chatDisplay').append(newMessage);
+		$('#chatDisplay').scrollTop($('#chatDisplay')[0].scrollHeight);		
+	}
+
+
+
+	/*Database Access Functions*/
+	checkForExistingMatch() {
+		$('.playArea').show();
+		//Hide each player area until match is determined
+		$('.p1PlayArea').hide();
+		$('.p2PlayArea').hide();
+
+		//Get open matches
+		database.ref('openMatches').once('value').then((snapshot) => {
+			if (snapshot.val() === null) {
+				//Create match ID and join as p1
+				this.matchId = database.ref().child('openMatches').push().key;
+				this.joinMatch('p1', 'p2');		
+			} else {
+				let matchFound = false;
+				//Search openMatches for one we can join
+				database.ref().child('openMatches').once('value').then((snapshot) => {
+					snapshot.forEach((childSnapshot) => {
+						if (childSnapshot.child('players/p2').exists() === false) {
+							//We can join this match as p2
+							this.matchId = childSnapshot.key;
+							this.joinMatch('p2', 'p1');
+							matchFound = true;
+						}
+					});
+					if (!matchFound) {
+						//No open matches found, make new match
+						this.matchId = database.ref().child('openMatches').push().key;
+						this.joinMatch('p1', 'p2');		
+					}
+				});
+			}
+		});
+	}
+
+	joinMatch(playerId, opponentId) {
+		this.initializePlayer(this.playerName, playerId, this.matchId);
+		this.opponentId = opponentId;
+		database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));		
+	}
+	
 	opponentStatusUpdated(snapshot) {
 		console.log('Opponent data', snapshot.val());
 		if (snapshot.val() === null && this.opponentInitialized) {
@@ -107,124 +209,6 @@ class RockPaperScissorsGame {
 		this.updateOpponentDisplay(snapshot);
 	}
 
-	updateOpponentDisplay(snapshot) {
-		$(`#${this.opponentId}WinsDisplay`).text(snapshot.val().wins);
-		$(`#${this.opponentId}LossesDisplay`).text(snapshot.val().losses);
-	}
-
-	updatePlayerDisplay() {
-		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
-		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
-	}
-	
-	checkForExistingMatch() {
-		$('.playArea').show();
-		//Hide each player area until match is determined
-		$('.p1PlayArea').hide();
-		$('.p2PlayArea').hide();
-
-		//Get open matches
-		database.ref('openMatches').once('value').then((snapshot) => {
-			if (snapshot.val() === null) {
-				//Create match ID and join as p1
-				this.matchId = database.ref().child('openMatches').push().key;
-				this.joinMatch('p1', 'p2');		
-			} else {
-				let matchFound = false;
-				//Search openMatches for one we can join
-				database.ref().child('openMatches').once('value').then((snapshot) => {
-					snapshot.forEach((childSnapshot) => {
-						if (childSnapshot.child('players/p2').exists() === false) {
-							//We can join this match as p2
-							this.matchId = childSnapshot.key;
-							this.joinMatch('p2', 'p1');
-							matchFound = true;
-						}
-					});
-					if (!matchFound) {
-						//No open matches found, make new match
-						this.matchId = database.ref().child('openMatches').push().key;
-						this.joinMatch('p1', 'p2');		
-					}
-				});
-			}
-		});
-	}
-
-	joinMatch(playerId, opponentId) {
-		this.initializePlayer(this.playerName, playerId, this.matchId);
-		this.opponentId = opponentId;
-		database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));		
-	}
-
-	initializePlayer(name, playerId, matchId) {
-		this.inMatch = true;
-		this.playerId = playerId;
-
-		database.ref('openMatches/' + matchId + '/players/' + this.playerId).set(
-		{
-			name: name,
-			wins: 0,
-			losses: 0
-		});
-
-		//Update UI
-		$(`.${this.playerId}PlayArea`).show();
-		$(`#${this.playerId}Name`).text(name);
-		this.updatePlayerDisplay();
-	}
-
-	disconnect() {
-		console.log('disconnecting');
-		if (this.inMatch) {
-			//Remove our data from database
-			database.ref('openMatches/' + this.matchId + '/players/' + this.playerId).remove();
-		}
-	}
-
-	handleInput(event) {
-		this.playerChoice = $(event.target).attr('data-choice');	
-
-		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update({
-			choice: this.playerChoice
-		});
-
-		//We chose, hide our input
-		$(`#${this.playerId}InputWrapper`).hide();
-		
-		//Clear win message from last round
-		$('#winnerMessage').empty();
-
-		this.playerMadeChoice = true;
-		
-
-		if (this.opponentMadeChoice) {
-			//Opponent has made choice already, decide winner
-			this.determineWinner();
-		}
-	}
-
-	sendChatMessage(message) {
-		message = `${this.playerName}: ${message}`;
-
-
-		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update({
-			chatMessage: message
-		});
-
-		this.displayChatMessage(message);
-	}
-
-	displayChatMessage(message) {
-		let newMessage = $('<p>', {
-			'class': 'chatMessage',
-			text: message
-		});	
-
-		$('#chatDisplay').append(newMessage);
-		$('#chatDisplay').scrollTop($('#chatDisplay')[0].scrollHeight);		
-	}
-
 	determineWinner() {
 		if (this.playerChoice === this.opponentChoice) {
 			//Draw
@@ -263,8 +247,26 @@ class RockPaperScissorsGame {
 		this.updatePlayerDisplay();
 
 		//Reset UI to allow next round
-		$(`#${this.playerId}InputWrapper`).show();
-		
+		$(`#${this.playerId}InputWrapper`).show();	
+	}
+
+	sendChatMessage(message) {
+		message = `${this.playerName}: ${message}`;
+
+
+		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update({
+			chatMessage: message
+		});
+
+		this.displayChatMessage(message);
+	}
+
+	disconnect() {
+		console.log('disconnecting');
+		if (this.inMatch) {
+			//Remove our data from database
+			database.ref('openMatches/' + this.matchId + '/players/' + this.playerId).remove();
+		}
 	}
 }
 
