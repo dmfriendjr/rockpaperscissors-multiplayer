@@ -1,3 +1,12 @@
+.playerCard,
+.resultsCard { 
+	min-height: 308px;
+}
+
+.p2ImageDisplay {
+	transform: scaleX(-1);
+}
+
 #chatDisplay {
 	height: 150px;
 }

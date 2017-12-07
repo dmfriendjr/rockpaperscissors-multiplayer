@@ -102,27 +102,30 @@ class RockPaperScissorsGame {
 		
 		this.playerMadeChoice = true;
 		//Display our choice, disable input
-		$(`#${this.playerId}ChoiceDisplay`).text(this.playerChoice);
-		this.toggleInputButtons(true);
+		//$(`#${this.playerId}ChoiceDisplay`).text(this.playerChoice);
+		$(`.${this.playerId}ImageDisplay`).attr('src', `./assets/images/${this.playerChoice}.png`);
+		this.toggleInputButtons(true, this.playerId);
 
 		if (this.opponentMadeChoice) {
 			//Opponent has made choice already, decide winner
 			this.determineWinner();
+		} else {
+			//Hide last choice to prevent user confusion
+			$(`.${this.opponentId}ImageDisplay`).hide();
 		}
 	}
 
-	toggleInputButtons(disabled) {
-		$(`.${this.playerId}Input`).each( (index, element) => {
+	toggleInputButtons(disabled, targetPlayerId) {
+		$(`.${targetPlayerId}Input`).each( (index, element) => {
 			$(element).prop('disabled', disabled);
 		});
-
 	}
 
 	checkForExistingMatch() {
 		$('.playArea').show();
 		//Hide each player area until match is determined
-		$('.p1PlayArea').hide();
-		$('.p2PlayArea').hide();
+		//$('.p1PlayArea').hide();
+		//$('.p2PlayArea').hide();
 
 		//Get open matches
 		database.ref('openMatches').once('value').then((snapshot) => {
@@ -147,6 +150,7 @@ class RockPaperScissorsGame {
 				});
 				if (matchFound) {
 					this.joinMatch(this.playerId, this.opponentId);
+					$(`#${this.playerId}WaitingWrapper`).hide();
 				}
 				if (!matchFound) {
 					//No open matches found, make new match
@@ -154,9 +158,14 @@ class RockPaperScissorsGame {
 					this.playerId = 'p1';
 					this.opponentId = 'p2';
 					this.joinMatch(this.playerId, this.opponentId);		
-					//No opponent yet, hide input buttons
-					$('#p1InputWrapper').hide();
+					//No opponent yet, show and disable the inputs
+					$('#p1WaitingWrapper').hide();
+					this.toggleInputButtons(true, this.playerId);
+					$('#p2InputWrapper').hide();
+					//this.toggleInputButtons(true, this.opponentId);
+					//$('#p1InputWrapper').hide();
 				}
+				
 			});
 		});
 	}
@@ -182,9 +191,13 @@ class RockPaperScissorsGame {
 
 		if (!this.opponentInitialized) {
 			//Opponent has connected, update UI and variables
-			//Hide finding match alert and display our input buttons
-			$(`#${this.playerId}WaitingWrapper`).hide();
-			$(`#${this.playerId}InputWrapper`).show();
+			$(`#${this.opponentId}WaitingWrapper`).hide();
+			$(`#${this.opponentId}InputWrapper`).show();
+			//Disable opponent input
+			this.toggleInputButtons(true, this.opponentId);
+			
+			//Enable our input
+			this.toggleInputButtons(false, this.playerId);
 			//Set opponent message to waiting for input
 			$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent choosing...');
 
@@ -192,8 +205,7 @@ class RockPaperScissorsGame {
 			$(`#${this.opponentId}Name`).text(this.opponentName);		
 			$(`.${this.opponentId}PlayArea`).show();
 			//Hide opponent input buttons
-			$(`#${this.opponentId}InputWrapper`).hide();
-			//Now listen for our input events
+			//$(`#${this.opponentId}InputWrapper`).hide();
 			$(`.${this.playerId}Input`).on('click', this.handleInput.bind(this));
 			this.opponentInitialized = true;
 		} else {
@@ -232,8 +244,9 @@ class RockPaperScissorsGame {
 		}
 
 		//Show opponent choice
-		$(`#${this.opponentId}ChoiceDisplay`).text(this.opponentChoice);
-
+		//$(`#${this.opponentId}ChoiceDisplay`).text(this.opponentChoice);
+		$(`.${this.opponentId}ImageDisplay`).show();
+		$(`.${this.opponentId}ImageDisplay`).attr('src', `./assets/images/${this.opponentChoice}.png`);
 		//Reset variables
 		this.opponentMadeChoice = false;
 		this.playerMadeChoice = false;
@@ -250,7 +263,7 @@ class RockPaperScissorsGame {
 
 		//Reset UI to allow next round
 		$(`#${this.playerId}InputWrapper`).show();	
-		this.toggleInputButtons(false);		
+		this.toggleInputButtons(false, this.playerId);		
 		//Alert player that opponent is choosing again
 		$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent choosing...');
 	}
