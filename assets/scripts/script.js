@@ -57,6 +57,7 @@ class RockPaperScissorsGame {
 			$('#chatInput').val('');
 			this.sendChatMessage(chatMessage);
 		});
+			
 
 		$(window).on('unload', () => {
 			this.disconnect();	
@@ -86,6 +87,7 @@ class RockPaperScissorsGame {
 		//Update UI
 		$(`.${this.playerId}PlayArea`).show();
 		$(`#${this.playerId}Name`).text(name);
+		$(`.${this.playerId}Input`).on('click', this.handleInput.bind(this));		
 		this.updatePlayerDisplay();
 	}
 
@@ -176,11 +178,14 @@ class RockPaperScissorsGame {
 	}
 	
 	opponentStatusUpdated(snapshot) {
-		console.log('Opponent data updated', snapshot.val());
 		if (snapshot.val() === null && this.opponentInitialized) {
 			//Opponent was initialized but has now disconnected
 			$(`#${this.opponentId}Name`).text('Disconnected!');			
 			this.displayChatMessage(`${this.opponentName} has disconnected!`);
+			//Reset player and opponent choices
+			this.opponentMadeChoice = false;
+			this.playerMadeChoice = false;
+			this.toggleInputButtons(false, this.playerId);
 			this.opponentInitialized = false;
 			return;
 		} else if (snapshot.val() === null) {
@@ -202,7 +207,8 @@ class RockPaperScissorsGame {
 			$(`#${this.opponentId}Name`).text(this.opponentName);		
 			$(`.${this.opponentId}PlayArea`).show();
 
-			$(`.${this.playerId}Input`).on('click', this.handleInput.bind(this));
+			this.displayChatMessage(`${this.opponentName} has connected!`);
+
 			this.opponentInitialized = true;
 		} else {
 			//Opponent initialized, listening for opponent to make their choice
@@ -247,7 +253,6 @@ class RockPaperScissorsGame {
 		//Reset variables
 		this.opponentMadeChoice = false;
 		this.playerMadeChoice = false;
-
 		//Update database
 		let updates = {};
 		updates[`/wins`] = this.playerWins;
@@ -259,7 +264,6 @@ class RockPaperScissorsGame {
 		this.updatePlayerDisplay();
 
 		//Reset UI to allow next round
-		$(`#${this.playerId}InputWrapper`).show();	
 		this.toggleInputButtons(false, this.playerId);		
 		//Alert player that opponent is choosing again
 		$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent choosing...');

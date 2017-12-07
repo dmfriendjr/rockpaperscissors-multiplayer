@@ -19,11 +19,14 @@
 		</div>
 
 		<div class="row">
-			<form>
+			<form class="col">
 				<div class="form-group row" id="nameInputForm">
-					<label for="nameInput">Enter Name</label>
-					<input type="text" class="form-control" id="nameInput">
-					<button type="submit" class="btn btn-primary" id="nameInputSubmit">Play!</button>				
+					<div class="col">
+						<input type="text" class="form-control" id="nameInput" placeholder="Enter Your Name">
+					</div>
+					<div class="col">
+						<button type="submit" class="btn btn-primary" id="nameInputSubmit">Play!</button>				
+					</div>
 				</div>
 			</form>
 		</div>
@@ -61,7 +64,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-6">
+				<div class="col-lg-6 col-sm-12">
 					<div class="card resultsCard">
 						<div class="card-header">
 							<h2>Results</h2>
