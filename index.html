@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+	<script src="https://use.fontawesome.com/0bfd8f7f19.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/4.7.0/firebase.js"></script>
 
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
@@ -29,48 +29,105 @@
 		</div>
 		<div class="playArea">
 			<div class="row">
-				<div class="col-sm p1PlayArea">
-					<h2 id="p1Name"></h2>
-					<h3>Wins:<span id='p1WinsDisplay'></span></h3>
-					<h3>Losses:<span id='p1LossesDisplay'></span></h3>
-					<div id="p1InputWrapper">
-						<button type="button" class="btn btn-primary p1Input" data-choice="rock">Rock</button>
-						<button type="button" class="btn btn-primary p1Input" data-choice="paper">Paper</button>
-						<button type="button" class="btn btn-primary p1Input" data-choice="scissors">Scissors</button>
+				<div class="col p1PlayArea">
+					<div class="card">
+						<div class="card-header">
+							<h2 id="p1Name"></h2>
+						</div>
+						<div class="card-body text-center">
+							<div id="p1WaitingWrapper">
+								<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+								<p id="p1WaitingMessageDisplay">Finding Match...</p>
+							</div>
+							<div id="p1InputWrapper">
+								<div class="btn-group-vertical">
+									<button type="button" class="btn btn-primary p1Input" data-choice="rock">Rock</button>
+									<button type="button" class="btn btn-primary p1Input mt-1" data-choice="paper">Paper</button>
+									<button type="button" class="btn btn-primary p1Input mt-1" data-choice="scissors">Scissors</button>
+								</div>
+							</div>
+						</div>
+						<div class="card-footer text-center">
+							<div class="row">
+								<div class="col-6">
+									<p>Wins:<span id='p1WinsDisplay'></span></p>
+								</div>
+								<div class="col-6">
+									<p>Losses:<span id='p1LossesDisplay'></span></p>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
-				<div class="col-sm">
-					<h2>Results</h2>
-					<div class="row">
-						<div class="col-sm">
-							<h2><span id="p1ChoiceDisplay"></span> vs. <span id="p2ChoiceDisplay"></span></h2>
+				<div class="col">
+					<div class="card">
+						<div class="card-header">
+							<h2>Results</h2>
+						</div>
+						<div class="card-body">
+							<div class="row">
+								<div class="col-sm">
+									<h2><span id="p1ChoiceDisplay"></span> vs. <span id="p2ChoiceDisplay"></span></h2>
+								</div>
+							</div>
+						</div>
+						<div class="card-footer">
 							<h2 id="winnerMessage"></h2>
 						</div>
 					</div>
 				</div>
-				<div class="col-sm p2PlayArea">
-					<h2 id="p2Name"></h2>
-					<h3>Wins:<span id='p2WinsDisplay'></span></h3>
-					<h3>Losses:<span id='p2LossesDisplay'></span></h3>
-					<div id="p2InputWrapper">
-						<button type="button" class="btn btn-primary p2Input" data-choice="rock">Rock</button>
-						<button type="button" class="btn btn-primary p2Input" data-choice="paper">Paper</button>
-						<button type="button" class="btn btn-primary p2Input" data-choice="scissors">Scissors</button>
+				<div class="col-sm">
+				</div>
+				<div class="col p2PlayArea">
+					<div class="card">
+						<div class="card-header">
+							<h2 id="p2Name"></h2>
+						</div>
+						<div class="card-body text-center">
+							<div id="p2WaitingWrapper">
+								<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+								<p id="p2WaitingMessageDisplay">Finding Match...</p>
+							</div>
+							<div id="p2InputWrapper">
+								<div class="btn-group-vertical">
+									<button type="button" class="btn btn-primary p2Input" data-choice="rock">Rock</button>
+									<button type="button" class="btn btn-primary p2Input mt-1" data-choice="paper">Paper</button>
+									<button type="button" class="btn btn-primary p2Input mt-1" data-choice="scissors">Scissors</button>
+								</div>
+							</div>
+						</div>
+						<div class="card-footer">
+							<div class="row">
+								<div class="col">
+									<p>Wins:<span id='p2WinsDisplay'></span></p>
+								</div>
+								<div class="col">
+									<p>Losses:<span id='p2LossesDisplay'></span></p>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
 			<div class="row mt-5">
 				<div class="col-sm">
 					<div class="card">
+						<div class="card-header">Chat</div>
 						<div class="card-body" id="chatDisplay">
 						</div>
-					</div>
-					<form>
-						<div class="form-group row">
-							<input type="text" class="form-control" id="chatInput">
-							<button type="submit" class="btn btn-primary" id="chatInputSubmit">Send</button>
+						<div class="card-footer">
+							<form>
+								<div class="row">
+									<div class="col-11">
+										<input type="text" class="form-control" id="chatInput">
+									</div>
+									<div class="col-1">
+										<button type="submit" class="btn btn-primary" id="chatInputSubmit">Send</button>
+									</div>
+								</div>
+							</form>
 						</div>
-					</form>
+					</div>
 				</div>
 			</div>
 		</div>

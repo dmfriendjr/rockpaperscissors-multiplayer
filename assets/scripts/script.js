@@ -97,19 +97,26 @@ class RockPaperScissorsGame {
 			choice: this.playerChoice
 		});
 
-		//We chose, hide our input
-		$(`#${this.playerId}InputWrapper`).hide();
 		
 		//Clear win message from last round
 		$('#winnerMessage').empty();
-
-		this.playerMadeChoice = true;
 		
+		this.playerMadeChoice = true;
+		//Display our choice, disable input
+		$(`#${this.playerId}ChoiceDisplay`).text(this.playerChoice);
+		this.toggleInputButtons(true);
 
 		if (this.opponentMadeChoice) {
 			//Opponent has made choice already, decide winner
 			this.determineWinner();
 		}
+	}
+
+	toggleInputButtons(disabled) {
+		$(`.${this.playerId}Input`).each( (index, element) => {
+			$(element).prop('disabled', disabled);
+		});
+
 	}
 
 	displayChatMessage(message) {
@@ -122,8 +129,6 @@ class RockPaperScissorsGame {
 		$('#chatDisplay').scrollTop($('#chatDisplay')[0].scrollHeight);		
 	}
 
-
-
 	/*Database Access Functions*/
 	checkForExistingMatch() {
 		$('.playArea').show();
@@ -133,29 +138,32 @@ class RockPaperScissorsGame {
 
 		//Get open matches
 		database.ref('openMatches').once('value').then((snapshot) => {
-			if (snapshot.val() === null) {
-				//Create match ID and join as p1
-				this.matchId = database.ref().child('openMatches').push().key;
-				this.joinMatch('p1', 'p2');		
-			} else {
-				let matchFound = false;
+			let matchFound = false;
+			database.ref().child('openMatches').once('value').then((snapshot) => {
+
 				//Search openMatches for one we can join
-				database.ref().child('openMatches').once('value').then((snapshot) => {
-					snapshot.forEach((childSnapshot) => {
-						if (childSnapshot.child('players/p2').exists() === false) {
-							//We can join this match as p2
-							this.matchId = childSnapshot.key;
-							this.joinMatch('p2', 'p1');
-							matchFound = true;
-						}
-					});
-					if (!matchFound) {
-						//No open matches found, make new match
-						this.matchId = database.ref().child('openMatches').push().key;
-						this.joinMatch('p1', 'p2');		
+				snapshot.forEach((childSnapshot) => {
+					if (childSnapshot.child('players/p2').exists() === false) {
+						//We can join this match as p2
+						this.matchId = childSnapshot.key;
+						this.joinMatch('p2', 'p1');
+						matchFound = true;
+					}
+					else if (childSnapshot.child('players/p1').exists() === false) {
+						//We can join this match as p1
+						this.matchId = childSnapshot.key;
+						this.joinMatch('p1', 'p2');
+						matchFound = true;
 					}
 				});
-			}
+				if (!matchFound) {
+					//No open matches found, make new match
+					this.matchId = database.ref().child('openMatches').push().key;
+					this.joinMatch('p1', 'p2');		
+					//No opponent yet, hide input buttons
+					$('#p1InputWrapper').hide();
+				}
+			});
 		});
 	}
 
@@ -179,6 +187,12 @@ class RockPaperScissorsGame {
 
 		if (!this.opponentInitialized) {
 			//Opponent has connected, update UI and variables
+			//Hide finding match alert and display our input buttons
+			$(`#${this.playerId}WaitingWrapper`).hide();
+			$(`#${this.playerId}InputWrapper`).show();
+			//Set opponent message to waiting for input
+			$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent choosing...');
+
 			this.opponentName = snapshot.val().name;
 			$(`#${this.opponentId}Name`).text(this.opponentName);		
 			$(`.${this.opponentId}PlayArea`).show();
@@ -194,7 +208,8 @@ class RockPaperScissorsGame {
 				console.log('Opponent picked option', snapshot.val().choice);
 				this.opponentChoice = snapshot.val().choice;
 				this.opponentMadeChoice = true;
-
+				//Alert player that opponent is waiting for your choice
+				$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent chose!');
 				if (this.playerMadeChoice) {
 					this.determineWinner();
 				}
@@ -228,7 +243,6 @@ class RockPaperScissorsGame {
 		}
 
 		//Show player choices
-		$(`#${this.playerId}ChoiceDisplay`).text(this.playerChoice);
 		$(`#${this.opponentId}ChoiceDisplay`).text(this.opponentChoice);
 
 		//Reset player choice on database
@@ -248,6 +262,9 @@ class RockPaperScissorsGame {
 
 		//Reset UI to allow next round
 		$(`#${this.playerId}InputWrapper`).show();	
+		this.toggleInputButtons(false);		
+		//Alert player that opponent is choosing again
+		$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent choosing...');
 	}
 
 	sendChatMessage(message) {
