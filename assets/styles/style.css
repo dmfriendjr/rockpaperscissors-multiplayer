@@ -1,6 +1,21 @@
-.playerCard,
-.resultsCard { 
+body {
+	background: url("../images/noise_lines.png") repeat;
+}
+
+.playerCard { 
 	min-height: 308px;
+}
+
+.resultsCard > .card-body {
+	height: 168px;
+}
+
+.resultsCard > .card-footer {
+	height: 74px;
+}
+.p1ImageDisplay,
+.p2ImageDisplay {
+	height: 128px;
 }
 
 .p2ImageDisplay {

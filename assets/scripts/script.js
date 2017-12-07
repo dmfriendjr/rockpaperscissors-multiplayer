@@ -295,7 +295,7 @@ class RockPaperScissorsGame {
 
 	displayChatAlert(message, alertStyle) {
 		let newAlert = $('<div>', {
-			'class': `alert alert-${alertStyle} text-center mb-0`,
+			'class': `alert alert-${alertStyle} text-center mb-1`,
 			text: message
 		});
 
