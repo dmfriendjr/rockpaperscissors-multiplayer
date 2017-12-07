@@ -2,17 +2,18 @@ body {
 	background: url("../images/noise_lines.png") repeat;
 }
 
-.playerCard { 
-	min-height: 308px;
+.playAreaCard > .card-body {
+	min-height: 168px;
 }
 
-.resultsCard > .card-body {
-	height: 168px;
+.playAreaCard > .card-header {
+	min-height: 72px;
 }
 
-.resultsCard > .card-footer {
-	height: 74px;
+.playAreaCard > .card-footer {
+	min-height: 74px;
 }
+
 .p1ImageDisplay,
 .p2ImageDisplay {
 	height: 128px;
@@ -21,7 +22,6 @@ body {
 .p2ImageDisplay {
 	transform: scaleX(-1);
 }
-
 
 .flashText {
 	animation: flashing 0.5s linear 0s 1;
