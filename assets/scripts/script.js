@@ -85,7 +85,6 @@ class RockPaperScissorsGame {
 		});
 
 		//Update UI
-		$(`.${this.playerId}PlayArea`).show();
 		$(`#${this.playerId}Name`).text(name);
 		$(`.${this.playerId}Input`).on('click', this.handleInput.bind(this));		
 		this.updatePlayerDisplay();
@@ -181,12 +180,13 @@ class RockPaperScissorsGame {
 		if (snapshot.val() === null && this.opponentInitialized) {
 			//Opponent was initialized but has now disconnected
 			$(`#${this.opponentId}Name`).text('Disconnected!');			
-			this.displayChatMessage(`${this.opponentName} has disconnected!`);
+			this.displayChatAlert(`${this.opponentName} has disconnected!`, 'danger');
 			//Reset player and opponent choices
 			this.opponentMadeChoice = false;
 			this.playerMadeChoice = false;
-			this.toggleInputButtons(false, this.playerId);
+			this.toggleInputButtons(true, this.playerId);
 			this.opponentInitialized = false;
+			//Disable player input
 			return;
 		} else if (snapshot.val() === null) {
 			//No opponent has connected yet
@@ -197,17 +197,14 @@ class RockPaperScissorsGame {
 			//Opponent has connected, update UI and variables
 			$(`#${this.opponentId}WaitingWrapper`).hide();
 			$(`#${this.opponentId}InputWrapper`).show();
-			//Disable opponent input
 			this.toggleInputButtons(true, this.opponentId);
-			
-			//Enable our input
 			this.toggleInputButtons(false, this.playerId);
 
 			this.opponentName = snapshot.val().name;
 			$(`#${this.opponentId}Name`).text(this.opponentName);		
-			$(`.${this.opponentId}PlayArea`).show();
 
-			this.displayChatMessage(`${this.opponentName} has connected!`);
+			//this.displayChatMessage(`${this.opponentName} has connected!`);
+			this.displayChatAlert(`${this.opponentName} has connected!`, 'info');
 
 			this.opponentInitialized = true;
 		} else {
@@ -295,6 +292,16 @@ class RockPaperScissorsGame {
 		//Autoscroll to bottom of window overflow if needed
 		$('#chatDisplay').scrollTop($('#chatDisplay')[0].scrollHeight);		
 	}	
+
+	displayChatAlert(message, alertStyle) {
+		let newAlert = $('<div>', {
+			'class': `alert alert-${alertStyle} text-center mb-0`,
+			text: message
+		});
+
+		$('#chatDisplay').append(newAlert);
+		$('#chatDisplay').scrollTop($('#chatDisplay')[0].scrollHeight);		
+	}
 
 	disconnect() {
 		if (this.inMatch) {
