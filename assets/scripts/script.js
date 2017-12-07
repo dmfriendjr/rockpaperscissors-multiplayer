@@ -102,8 +102,8 @@ class RockPaperScissorsGame {
 		
 		this.playerMadeChoice = true;
 		//Display our choice, disable input
-		//$(`#${this.playerId}ChoiceDisplay`).text(this.playerChoice);
 		$(`.${this.playerId}ImageDisplay`).attr('src', `./assets/images/${this.playerChoice}.png`);
+		$(`.${this.playerId}ImageDisplay`).show();		
 		this.toggleInputButtons(true, this.playerId);
 
 		if (this.opponentMadeChoice) {
@@ -123,10 +123,9 @@ class RockPaperScissorsGame {
 
 	checkForExistingMatch() {
 		$('.playArea').show();
-		//Hide each player area until match is determined
-		//$('.p1PlayArea').hide();
-		//$('.p2PlayArea').hide();
-
+		//Hide initial images for player choices
+		$('.p1ImageDisplay').hide();
+		$('.p2ImageDisplay').hide();
 		//Get open matches
 		database.ref('openMatches').once('value').then((snapshot) => {
 			database.ref().child('openMatches').once('value').then((snapshot) => {
@@ -198,14 +197,11 @@ class RockPaperScissorsGame {
 			
 			//Enable our input
 			this.toggleInputButtons(false, this.playerId);
-			//Set opponent message to waiting for input
-			$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent choosing...');
 
 			this.opponentName = snapshot.val().name;
 			$(`#${this.opponentId}Name`).text(this.opponentName);		
 			$(`.${this.opponentId}PlayArea`).show();
-			//Hide opponent input buttons
-			//$(`#${this.opponentId}InputWrapper`).hide();
+
 			$(`.${this.playerId}Input`).on('click', this.handleInput.bind(this));
 			this.opponentInitialized = true;
 		} else {
@@ -214,8 +210,6 @@ class RockPaperScissorsGame {
 				//Opponent has chosen
 				this.opponentChoice = snapshot.val().choice;
 				this.opponentMadeChoice = true;
-				//Alert player that opponent is waiting for your choice
-				$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent chose!');
 				if (this.playerMadeChoice) {
 					this.determineWinner();
 				}
@@ -243,8 +237,11 @@ class RockPaperScissorsGame {
 			this.playerLosses++;
 		}
 
+		//Flash text
+		$('#winnerMessage').addClass('flashText');
+		setTimeout(()=> {$('#winnerMessage').removeClass('flashText')},500);
+
 		//Show opponent choice
-		//$(`#${this.opponentId}ChoiceDisplay`).text(this.opponentChoice);
 		$(`.${this.opponentId}ImageDisplay`).show();
 		$(`.${this.opponentId}ImageDisplay`).attr('src', `./assets/images/${this.opponentChoice}.png`);
 		//Reset variables

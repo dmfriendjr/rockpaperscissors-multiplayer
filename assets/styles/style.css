@@ -7,6 +7,17 @@
 	transform: scaleX(-1);
 }
 
+
+.flashText {
+	animation: flashing 0.5s linear 0s 1;
+}
+
+@keyframes flashing {
+	0% {opacity: 1;}
+	50% {opacity: 0;}
+	100% {opacity: 1;}
+}
+
 #chatDisplay {
 	height: 150px;
 }
