@@ -77,7 +77,7 @@ class RockPaperScissorsGame {
 	initializePlayer(name, playerId, matchId) {
 		this.inMatch = true;
 
-		database.ref('openMatches/' + matchId + '/players/' + this.playerId).set(
+		database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(
 		{
 			name: name,
 			wins: 0,
@@ -162,8 +162,6 @@ class RockPaperScissorsGame {
 					$('#p1WaitingWrapper').hide();
 					this.toggleInputButtons(true, this.playerId);
 					$('#p2InputWrapper').hide();
-					//this.toggleInputButtons(true, this.opponentId);
-					//$('#p1InputWrapper').hide();
 				}
 				
 			});
@@ -186,7 +184,6 @@ class RockPaperScissorsGame {
 			this.playerMadeChoice = false;
 			this.toggleInputButtons(true, this.playerId);
 			this.opponentInitialized = false;
-			//Disable player input
 			return;
 		} else if (snapshot.val() === null) {
 			//No opponent has connected yet
@@ -203,7 +200,6 @@ class RockPaperScissorsGame {
 			this.opponentName = snapshot.val().name;
 			$(`#${this.opponentId}Name`).text(this.opponentName);		
 
-			//this.displayChatMessage(`${this.opponentName} has connected!`);
 			this.displayChatAlert(`${this.opponentName} has connected!`, 'info');
 
 			this.opponentInitialized = true;
@@ -247,9 +243,11 @@ class RockPaperScissorsGame {
 		//Show opponent choice
 		$(`.${this.opponentId}ImageDisplay`).show();
 		$(`.${this.opponentId}ImageDisplay`).attr('src', `./assets/images/${this.opponentChoice}.png`);
+
 		//Reset variables
 		this.opponentMadeChoice = false;
 		this.playerMadeChoice = false;
+
 		//Update database
 		let updates = {};
 		updates[`/wins`] = this.playerWins;
@@ -262,6 +260,7 @@ class RockPaperScissorsGame {
 
 		//Reset UI to allow next round
 		this.toggleInputButtons(false, this.playerId);		
+
 		//Alert player that opponent is choosing again
 		$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent choosing...');
 	}
