@@ -1,18 +1,3 @@
-  var config = {
-    apiKey: "AIzaSyCjytawaV-Yv2Vw_Hp6iTKA9d_tcUnOPnY",
-    authDomain: "rockpaperscissors-multip-1897b.firebaseapp.com",
-    databaseURL: "https://rockpaperscissors-multip-1897b.firebaseio.com",
-    projectId: "rockpaperscissors-multip-1897b",
-    storageBucket: "",
-    messagingSenderId: "307049576798"
-  };
-  firebase.initializeApp(config);
-
-
-var database = firebase.database();
-
-
-
 class RockPaperScissorsGame {
 	constructor() {
 		this.playerName;
@@ -25,6 +10,19 @@ class RockPaperScissorsGame {
 		this.opponentMadeChoice = false;
 		this.opponentInitialized = false;
 		this.inMatch = false;
+
+		this.databaseConfig = 
+			{
+				apiKey: "AIzaSyCjytawaV-Yv2Vw_Hp6iTKA9d_tcUnOPnY",
+				authDomain: "rockpaperscissors-multip-1897b.firebaseapp.com",
+				databaseURL: "https://rockpaperscissors-multip-1897b.firebaseio.com",
+				projectId: "rockpaperscissors-multip-1897b",
+				storageBucket: "",
+				messagingSenderId: "307049576798"
+			};
+
+		firebase.initializeApp(this.databaseConfig);
+		this.database = firebase.database();
 
 		$('.playArea').hide();
 
@@ -80,9 +78,9 @@ class RockPaperScissorsGame {
 			losses: 0	
 		};
 
-		database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(this.playerData);
+		this.database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(this.playerData);
 		//Set a blank chat message so that child_changed event will pick up the first chat message sent by user
-		database.ref(`openMatches/${matchId}/chat/${this.playerId}`).set(
+		this.database.ref(`openMatches/${matchId}/chat/${this.playerId}`).set(
 			{
 				chatMessage: ''
 			});
@@ -96,7 +94,7 @@ class RockPaperScissorsGame {
 	handleInput(event) {
 		this.playerData['choice'] = $(event.target).attr('data-choice');
 	
-		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update(this.playerData);
+		this.database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update(this.playerData);
 
 		//Clear win message from last round
 		$('#winnerMessage').empty();
@@ -129,8 +127,8 @@ class RockPaperScissorsGame {
 		$('.p1ImageDisplay').hide();
 		$('.p2ImageDisplay').hide();
 		//Get open matches
-		database.ref('openMatches').once('value').then((snapshot) => {
-			database.ref().child('openMatches').once('value').then((snapshot) => {
+		this.database.ref('openMatches').once('value').then((snapshot) => {
+			this.database.ref().child('openMatches').once('value').then((snapshot) => {
 
 				//Search openMatches for one we can join	
 				let matchFound = snapshot.forEach((childSnapshot) => {
@@ -155,7 +153,7 @@ class RockPaperScissorsGame {
 				}
 				if (!matchFound) {
 					//No open matches found, make new match
-					this.matchId = database.ref().child('openMatches').push().key;
+					this.matchId = this.database.ref().child('openMatches').push().key;
 					this.playerId = 'p1';
 					this.opponentId = 'p2';
 					this.joinMatch(this.playerId, this.opponentId);		
@@ -171,8 +169,8 @@ class RockPaperScissorsGame {
 
 	joinMatch(playerId, opponentId) {
 		this.initializePlayer(this.playerName, playerId, this.matchId);
-		database.ref(`openMatches/${this.matchId}/chat/${this.opponentId}`).on('child_added', this.chatStatusUpdated.bind(this));
-		database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));	
+		this.database.ref(`openMatches/${this.matchId}/chat/${this.opponentId}`).on('child_added', this.chatStatusUpdated.bind(this));
+		this.database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));	
 	}
 	
 	opponentStatusUpdated(snapshot) {
@@ -261,7 +259,7 @@ class RockPaperScissorsGame {
 		this.playerData.choice = null;
 
 
-		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update(this.playerData);
+		this.database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update(this.playerData);
 
 		this.updatePlayerDisplay();
 
@@ -279,7 +277,7 @@ class RockPaperScissorsGame {
 	sendChatMessage(message) {
 		message = `${this.playerData.name}: ${message}`;
 
-		database.ref(`openMatches/${this.matchId}/chat/${this.playerId}`).set({
+		this.database.ref(`openMatches/${this.matchId}/chat/${this.playerId}`).set({
 			chatMessage: message
 		});
 
@@ -313,7 +311,7 @@ class RockPaperScissorsGame {
 			let updates = {};
 			updates[`/players/${this.playerId}`] = null;
 			updates[`/chat/${this.playerId}`] = null;
-			database.ref(`openMatches/${this.matchId}`).update(updates);
+			this.database.ref(`openMatches/${this.matchId}`).update(updates);
 		}
 	}
 }
