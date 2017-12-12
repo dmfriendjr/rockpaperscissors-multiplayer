@@ -17,14 +17,11 @@ class RockPaperScissorsGame {
 	constructor() {
 		this.playerName;
 		this.matchId;
+		this.playerData;
 		this.playerId;
-		this.playerChoice;
 		this.playerMadeChoice = false;
-		this.playerWins = 0;
-		this.playerLosses = 0;
 		this.opponentId;
-		this.opponentName;
-		this.opponentChoice;
+		this.opponentData;
 		this.opponentMadeChoice = false;
 		this.opponentInitialized = false;
 		this.inMatch = false;
@@ -70,19 +67,21 @@ class RockPaperScissorsGame {
 	}
 
 	updatePlayerDisplay() {
-		$(`#${this.playerId}WinsDisplay`).text(this.playerWins);
-		$(`#${this.playerId}LossesDisplay`).text(this.playerLosses);
+		$(`#${this.playerId}WinsDisplay`).text(this.playerData.wins);
+		$(`#${this.playerId}LossesDisplay`).text(this.playerData.losses);
 	}
 	
 	initializePlayer(name, playerId, matchId) {
 		this.inMatch = true;
 
-		database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(
-		{
+		this.playerData = {
 			name: name,
 			wins: 0,
-			losses: 0
-		});
+			losses: 0	
+		};
+
+
+		database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(this.playerData);
 
 		//Update UI
 		$(`#${this.playerId}Name`).text(name);
@@ -91,19 +90,16 @@ class RockPaperScissorsGame {
 	}
 
 	handleInput(event) {
-		this.playerChoice = $(event.target).attr('data-choice');	
+		this.playerData['choice'] = $(event.target).attr('data-choice');
+	
+		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update(this.playerData);
 
-		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update({
-			choice: this.playerChoice
-		});
-
-		
 		//Clear win message from last round
 		$('#winnerMessage').empty();
 		
 		this.playerMadeChoice = true;
 		//Display our choice, disable input
-		$(`.${this.playerId}ImageDisplay`).attr('src', `./assets/images/${this.playerChoice}.png`);
+		$(`.${this.playerId}ImageDisplay`).attr('src', `./assets/images/${this.playerData.choice}.png`);
 		$(`.${this.playerId}ImageDisplay`).show();		
 		this.toggleInputButtons(true, this.playerId);
 
@@ -171,14 +167,14 @@ class RockPaperScissorsGame {
 	joinMatch(playerId, opponentId) {
 		this.initializePlayer(this.playerName, playerId, this.matchId);
 		database.ref(`openMatches/${this.matchId}/chat/${this.opponentId}`).on('value', this.chatStatusUpdated.bind(this));
-		database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));		
+		database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));	
 	}
 	
 	opponentStatusUpdated(snapshot) {
 		if (snapshot.val() === null && this.opponentInitialized) {
 			//Opponent was initialized but has now disconnected
 			$(`#${this.opponentId}Name`).text('Disconnected!');			
-			this.displayChatAlert(`${this.opponentName} has disconnected!`, 'danger');
+			this.displayChatAlert(`${this.opponentData.name} has disconnected!`, 'danger');
 			//Reset player and opponent choices
 			this.opponentMadeChoice = false;
 			this.playerMadeChoice = false;
@@ -191,23 +187,25 @@ class RockPaperScissorsGame {
 		}
 
 		if (!this.opponentInitialized) {
+			//Update local opponent data
+			this.opponentData = snapshot.val();
 			//Opponent has connected, update UI and variables
 			$(`#${this.opponentId}WaitingWrapper`).hide();
 			$(`#${this.opponentId}InputWrapper`).show();
 			this.toggleInputButtons(true, this.opponentId);
 			this.toggleInputButtons(false, this.playerId);
 
-			this.opponentName = snapshot.val().name;
-			$(`#${this.opponentId}Name`).text(this.opponentName);		
-
-			this.displayChatAlert(`${this.opponentName} has connected!`, 'info');
+			$(`#${this.opponentId}Name`).text(this.opponentData.name);		
+		
+			this.displayChatAlert(`${this.opponentData.name} has connected!`, 'success');
 
 			this.opponentInitialized = true;
 		} else {
 			//Opponent initialized, listening for opponent to make their choice
+			//Update local opponent data
+			this.opponentData = snapshot.val();
 			if (snapshot.child('choice').exists()) {
 				//Opponent has chosen
-				this.opponentChoice = snapshot.val().choice;
 				this.opponentMadeChoice = true;
 				if (this.playerMadeChoice) {
 					this.determineWinner();
@@ -219,21 +217,21 @@ class RockPaperScissorsGame {
 	}
 
 	determineWinner() {
-		if (this.playerChoice === this.opponentChoice) {
+		if (this.playerData.choice === this.opponentData.choice) {
 			//Draw
 			$('#winnerMessage').text('Draw!');
 		}
-		else if ((this.playerChoice === 'rock' && this.opponentChoice === 'scissors') ||
-			(this.playerChoice === 'paper' && this.opponentChoice === 'rock') ||
-			(this.playerChoice === 'scissors' && this.opponentChoice === 'paper')
+		else if ((this.playerData.choice === 'rock' && this.opponentData.choice === 'scissors') ||
+			(this.playerData.choice === 'paper' && this.opponentData.choice === 'rock') ||
+			(this.playerData.choice === 'scissors' && this.opponentData.choice === 'paper')
 		) {
 			//Player wins
-			$('#winnerMessage').text(`${this.playerName} Wins!`);
-			this.playerWins++;
+			$('#winnerMessage').text(`${this.playerData.name} Wins!`);
+			this.playerData.wins++;
 		} else {
 			//Opponent wins
-			$('#winnerMessage').text(`${this.opponentName} Wins!`);
-			this.playerLosses++;
+			$('#winnerMessage').text(`${this.opponentData.name} Wins!`);
+			this.playerData.losses++;
 		}
 
 		//Flash text
@@ -242,19 +240,15 @@ class RockPaperScissorsGame {
 
 		//Show opponent choice
 		$(`.${this.opponentId}ImageDisplay`).show();
-		$(`.${this.opponentId}ImageDisplay`).attr('src', `./assets/images/${this.opponentChoice}.png`);
+		$(`.${this.opponentId}ImageDisplay`).attr('src', `./assets/images/${this.opponentData.choice}.png`);
 
 		//Reset variables
 		this.opponentMadeChoice = false;
 		this.playerMadeChoice = false;
+		this.playerData.choice = null;
 
-		//Update database
-		let updates = {};
-		updates[`/wins`] = this.playerWins;
-		updates[`/losses`] = this.playerLosses;
-		updates[`/choice`] = null; 
 
-		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update(updates);
+		database.ref(`openMatches/${this.matchId}/players/${this.playerId}`).update(this.playerData);
 
 		this.updatePlayerDisplay();
 
@@ -272,7 +266,7 @@ class RockPaperScissorsGame {
 	}	
 
 	sendChatMessage(message) {
-		message = `${this.playerName}: ${message}`;
+		message = `${this.playerData.name}: ${message}`;
 
 		database.ref(`openMatches/${this.matchId}/chat/${this.playerId}`).update({
 			chatMessage: message
