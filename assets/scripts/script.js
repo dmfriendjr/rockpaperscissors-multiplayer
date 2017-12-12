@@ -79,11 +79,6 @@ class RockPaperScissorsGame {
 		};
 
 		this.database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(this.playerData);
-		//Set a blank chat message so that child_changed event will pick up the first chat message sent by user
-		this.database.ref(`openMatches/${matchId}/chat/${this.playerId}`).set(
-			{
-				chatMessage: ''
-			});
 
 		//Update UI
 		$(`#${this.playerId}Name`).text(name);
