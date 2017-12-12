@@ -81,6 +81,11 @@ class RockPaperScissorsGame {
 		};
 
 		database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(this.playerData);
+		//Set a blank chat message so that child_changed event will pick up the first chat message sent by user
+		database.ref(`openMatches/${matchId}/chat/${this.playerId}`).set(
+			{
+				chatMessage: ''
+			});
 
 		//Update UI
 		$(`#${this.playerId}Name`).text(name);
@@ -166,7 +171,7 @@ class RockPaperScissorsGame {
 
 	joinMatch(playerId, opponentId) {
 		this.initializePlayer(this.playerName, playerId, this.matchId);
-		database.ref(`openMatches/${this.matchId}/chat/${this.opponentId}`).on('value', this.chatStatusUpdated.bind(this));
+		database.ref(`openMatches/${this.matchId}/chat/${this.opponentId}`).on('child_added', this.chatStatusUpdated.bind(this));
 		database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));	
 	}
 	
@@ -187,7 +192,6 @@ class RockPaperScissorsGame {
 			$(`#${this.opponentId}WaitingWrapper`).show();
 			$(`#${this.opponentId}InputWrapper`).hide();
 			
-
 			this.opponentInitialized = false;
 			return;
 		} else if (snapshot.val() === null) {
@@ -266,15 +270,16 @@ class RockPaperScissorsGame {
 	}
 
 	chatStatusUpdated(snapshot) {
-		if (snapshot.child('chatMessage').exists()) {
-			this.displayChatMessage(snapshot.val().chatMessage);
-		}
+		this.displayChatMessage(snapshot.val());
+
+		//Removing ref so child_added event fires on next sent message
+		snapshot.ref.remove();
 	}	
 
 	sendChatMessage(message) {
 		message = `${this.playerData.name}: ${message}`;
 
-		database.ref(`openMatches/${this.matchId}/chat/${this.playerId}`).update({
+		database.ref(`openMatches/${this.matchId}/chat/${this.playerId}`).set({
 			chatMessage: message
 		});
 
