@@ -80,7 +80,6 @@ class RockPaperScissorsGame {
 			losses: 0	
 		};
 
-
 		database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(this.playerData);
 
 		//Update UI
@@ -101,6 +100,7 @@ class RockPaperScissorsGame {
 		//Display our choice, disable input
 		$(`.${this.playerId}ImageDisplay`).attr('src', `./assets/images/${this.playerData.choice}.png`);
 		$(`.${this.playerId}ImageDisplay`).show();		
+
 		this.toggleInputButtons(true, this.playerId);
 
 		if (this.opponentMadeChoice) {
@@ -178,7 +178,16 @@ class RockPaperScissorsGame {
 			//Reset player and opponent choices
 			this.opponentMadeChoice = false;
 			this.playerMadeChoice = false;
+			//Remove displayed image for player choice if it is displayed
+			$(`.${this.playerId}ImageDisplay`).hide();
+
 			this.toggleInputButtons(true, this.playerId);
+
+			//Display matchmaking spinner
+			$(`#${this.opponentId}WaitingWrapper`).show();
+			$(`#${this.opponentId}InputWrapper`).hide();
+			
+
 			this.opponentInitialized = false;
 			return;
 		} else if (snapshot.val() === null) {
@@ -239,8 +248,8 @@ class RockPaperScissorsGame {
 		setTimeout(()=> {$('#winnerMessage').removeClass('flashText')},500);
 
 		//Show opponent choice
-		$(`.${this.opponentId}ImageDisplay`).show();
 		$(`.${this.opponentId}ImageDisplay`).attr('src', `./assets/images/${this.opponentData.choice}.png`);
+		$(`.${this.opponentId}ImageDisplay`).show();
 
 		//Reset variables
 		this.opponentMadeChoice = false;
@@ -254,9 +263,6 @@ class RockPaperScissorsGame {
 
 		//Reset UI to allow next round
 		this.toggleInputButtons(false, this.playerId);		
-
-		//Alert player that opponent is choosing again
-		$(`#${this.opponentId}WaitingMessageDisplay`).text('Opponent choosing...');
 	}
 
 	chatStatusUpdated(snapshot) {
