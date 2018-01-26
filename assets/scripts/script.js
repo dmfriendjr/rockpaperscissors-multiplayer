@@ -24,6 +24,24 @@ class RockPaperScissorsGame {
 				messagingSenderId: "307049576798"
 			};
 
+		// FirebaseUI config.
+		this.uiConfig = 
+			{
+				signInOptions: [
+					// Leave the lines as is for the providers you want to offer your users.
+					firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+					firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+					firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+					firebase.auth.EmailAuthProvider.PROVIDER_ID
+				],
+				signInFlow: 'popup',
+				// Terms of service url.
+				tosUrl: '<your-tos-url>',
+				callbacks: {
+					signInSuccess: function() { return false; }
+				}
+			};
+
 		firebase.initializeApp(this.databaseConfig);
 		this.database = firebase.database();
 		this.listenForFirebaseAuth();
@@ -62,29 +80,12 @@ class RockPaperScissorsGame {
 			this.disconnect();	
 		});
 
-		// FirebaseUI config.
-		var uiConfig = {
-		signInOptions: [
-			// Leave the lines as is for the providers you want to offer your users.
-			firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-			firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-			firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-			firebase.auth.GithubAuthProvider.PROVIDER_ID,
-			firebase.auth.EmailAuthProvider.PROVIDER_ID,
-			firebase.auth.PhoneAuthProvider.PROVIDER_ID
-		],
-		signInFlow: 'popup',
-		// Terms of service url.
-		tosUrl: '<your-tos-url>',
-		callbacks: {
-			signInSuccess: function() { return false; }
-		}
-		};
+
 
 		// Initialize the FirebaseUI Widget using Firebase.
 		this.firebaseUi = new firebaseui.auth.AuthUI(firebase.auth());
 		// The start method will wait until the DOM is loaded.
-		this.firebaseUi.start('#firebaseui-auth-container', uiConfig);
+		this.firebaseUi.start('#firebaseui-auth-container', this.uiConfig);
 	}
 
 	listenForFirebaseAuth() {
@@ -104,7 +105,7 @@ class RockPaperScissorsGame {
 			  var providerData = user.providerData;
 			  user.getIdToken().then(function(accessToken) {
 				document.getElementById('account-details').innerHTML = 
-					`<img class="account-image" src='${photoURL}'></img><span>${displayName}</span>`;
+					`<img class="account-image img-responsive" src='${photoURL}'></img><span>${displayName}</span>`;
 				document.getElementById('sign-out-btn').style.display = 'inline-block';
 			  });
 
@@ -123,12 +124,16 @@ class RockPaperScissorsGame {
 	  
 					self.database.ref(`users/${self.uid}`).set(self.userData);
 				}
+
+				$('#nameInput').val(self.userData.name);
+				document.getElementById('auth-display').style.display = 'none';
 			  });
 			} else {
 			  // User is signed out.
-			  document.getElementById('sign-in-status').textContent = 'Signed out';
-			  document.getElementById('sign-in').textContent = 'Sign in';
-			  document.getElementById('account-details').textContent = 'null';
+				document.getElementById('account-details').textContent = '';
+				document.getElementById('auth-display').style.display = 'flex';
+				self.firebaseUi.reset();
+				self.firebaseUi.start('#firebaseui-auth-container', this.uiConfig);
 			}
 		  }, function(error) {
 			console.log(error);
@@ -256,6 +261,9 @@ class RockPaperScissorsGame {
 
 	joinMatch(playerId, opponentId) {
 		this.initializePlayer(this.playerName, playerId, this.matchId);
+		if (!this.signedIn) {
+			document.getElementById('auth-display').style.display = 'none';
+		}
 		this.database.ref(`openMatches/${this.matchId}/chat/${this.opponentId}`).on('child_added', this.chatStatusUpdated.bind(this));
 		this.database.ref(`openMatches/${this.matchId}/players/${this.opponentId}`).on('value', this.opponentStatusUpdated.bind(this));	
 	}
