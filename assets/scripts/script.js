@@ -4,12 +4,14 @@ class RockPaperScissorsGame {
 		this.matchId;
 		this.playerData;
 		this.playerId;
+		this.userData;
 		this.playerMadeChoice = false;
 		this.opponentId;
 		this.opponentData;
 		this.opponentMadeChoice = false;
 		this.opponentInitialized = false;
 		this.inMatch = false;
+		this.signedIn = false;
 
 		this.databaseConfig = 
 			{
@@ -23,6 +25,7 @@ class RockPaperScissorsGame {
 
 		firebase.initializeApp(this.databaseConfig);
 		this.database = firebase.database();
+		this.listenForFirebaseAuth();
 
 		$('.playArea').hide();
 
@@ -57,6 +60,100 @@ class RockPaperScissorsGame {
 		$(window).on('unload', () => {
 			this.disconnect();	
 		});
+
+		// FirebaseUI config.
+		var uiConfig = {
+		signInOptions: [
+			// Leave the lines as is for the providers you want to offer your users.
+			firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+			firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+			firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+			firebase.auth.GithubAuthProvider.PROVIDER_ID,
+			firebase.auth.EmailAuthProvider.PROVIDER_ID,
+			firebase.auth.PhoneAuthProvider.PROVIDER_ID
+		],
+		signInFlow: 'popup',
+		// Terms of service url.
+		tosUrl: '<your-tos-url>',
+		callbacks: {
+			signInSuccess: function() { return false; }
+		}
+		};
+
+		// Initialize the FirebaseUI Widget using Firebase.
+		this.firebaseUi = new firebaseui.auth.AuthUI(firebase.auth());
+		// The start method will wait until the DOM is loaded.
+		this.firebaseUi.start('#firebaseui-auth-container', uiConfig);
+	}
+
+	listenForFirebaseAuth() {
+		document.getElementById('sign-out-btn').addEventListener('click', this.logOutUser.bind(this));
+		document.getElementById('sign-out-btn').style.display= 'none';
+		let self = this;
+        firebase.auth().onAuthStateChanged(function(user) {
+			if (user) {
+			  // User is signed in.
+			  self.signedIn = true;
+			  var displayName = user.displayName;
+			  var email = user.email;
+			  var emailVerified = user.emailVerified;
+			  var photoURL = user.photoURL;
+			  var uid = user.uid;
+			  var phoneNumber = user.phoneNumber;
+			  var providerData = user.providerData;
+			  user.getIdToken().then(function(accessToken) {
+				document.getElementById('sign-in-status').textContent = 'Signed in';
+				document.getElementById('sign-in').textContent = 'Sign out';
+				document.getElementById('account-details').textContent = JSON.stringify({
+				  displayName: displayName,
+				  email: email,
+				  emailVerified: emailVerified,
+				  phoneNumber: phoneNumber,
+				  photoURL: photoURL,
+				  uid: uid,
+				  accessToken: accessToken,
+				  providerData: providerData
+				}, null, '  ');
+				document.getElementById('sign-out-btn').style.display = 'inline-block';
+			  });
+
+			  //Check if user already exists
+			  self.database.ref(`users/${uid}`).once('value', function(snapshot) {
+				var exists = (snapshot.val() !== null);
+				if (exists) {
+					console.log(snapshot.val());
+					self.userData = snapshot.val();
+				} else {
+					self.userData = {
+						name: displayName,
+						wins: 0,
+						losses: 0
+					}
+	  
+					self.database.ref(`users/${uid}`).set(self.userData);
+				}
+			  });
+
+
+			} else {
+			  // User is signed out.
+			  document.getElementById('sign-in-status').textContent = 'Signed out';
+			  document.getElementById('sign-in').textContent = 'Sign in';
+			  document.getElementById('account-details').textContent = 'null';
+			}
+		  }, function(error) {
+			console.log(error);
+		  });		
+	}
+
+	logOutUser() {
+		console.log('Pre-logout:' + this.signedIn);
+		firebase.auth().signOut().then(function () {
+			console.log('Signed out');
+			document.getElementById('sign-out-btn').style.display= 'none';
+		}).catch(function(error) {
+
+		});
 	}
 
 	updateOpponentDisplay(snapshot) {
@@ -72,11 +169,15 @@ class RockPaperScissorsGame {
 	initializePlayer(name, playerId, matchId) {
 		this.inMatch = true;
 
-		this.playerData = {
-			name: name,
-			wins: 0,
-			losses: 0	
-		};
+		if (this.signedIn) {
+			this.playerData = this.userData;
+		} else {
+			this.playerData = {
+				name: name,
+				wins: 0,
+				losses: 0	
+			};
+		}
 
 		this.database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(this.playerData);
 
