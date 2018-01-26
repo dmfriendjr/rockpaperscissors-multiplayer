@@ -2,6 +2,17 @@ body {
 	background: url("../images/noise_lines.png") repeat;
 }
 
+#account-details {
+}
+
+.account-image {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	margin: 5px;
+	vertical-align: middle;
+}
+
 .playAreaCard > .card-body {
 	min-height: 168px;
 }

@@ -12,6 +12,7 @@ class RockPaperScissorsGame {
 		this.opponentInitialized = false;
 		this.inMatch = false;
 		this.signedIn = false;
+		this.uid;
 
 		this.databaseConfig = 
 			{
@@ -98,27 +99,17 @@ class RockPaperScissorsGame {
 			  var email = user.email;
 			  var emailVerified = user.emailVerified;
 			  var photoURL = user.photoURL;
-			  var uid = user.uid;
+			  self.uid = user.uid;
 			  var phoneNumber = user.phoneNumber;
 			  var providerData = user.providerData;
 			  user.getIdToken().then(function(accessToken) {
-				document.getElementById('sign-in-status').textContent = 'Signed in';
-				document.getElementById('sign-in').textContent = 'Sign out';
-				document.getElementById('account-details').textContent = JSON.stringify({
-				  displayName: displayName,
-				  email: email,
-				  emailVerified: emailVerified,
-				  phoneNumber: phoneNumber,
-				  photoURL: photoURL,
-				  uid: uid,
-				  accessToken: accessToken,
-				  providerData: providerData
-				}, null, '  ');
+				document.getElementById('account-details').innerHTML = 
+					`<img class="account-image" src='${photoURL}'></img><span>${displayName}</span>`;
 				document.getElementById('sign-out-btn').style.display = 'inline-block';
 			  });
 
 			  //Check if user already exists
-			  self.database.ref(`users/${uid}`).once('value', function(snapshot) {
+			  self.database.ref(`users/${self.uid}`).once('value', function(snapshot) {
 				var exists = (snapshot.val() !== null);
 				if (exists) {
 					console.log(snapshot.val());
@@ -130,11 +121,9 @@ class RockPaperScissorsGame {
 						losses: 0
 					}
 	  
-					self.database.ref(`users/${uid}`).set(self.userData);
+					self.database.ref(`users/${self.uid}`).set(self.userData);
 				}
 			  });
-
-
 			} else {
 			  // User is signed out.
 			  document.getElementById('sign-in-status').textContent = 'Signed out';
@@ -171,6 +160,8 @@ class RockPaperScissorsGame {
 
 		if (this.signedIn) {
 			this.playerData = this.userData;
+			//Prefer the name entered by player over display name attached to sign in
+			this.playerData.name = this.playerName;
 		} else {
 			this.playerData = {
 				name: name,
@@ -178,7 +169,7 @@ class RockPaperScissorsGame {
 				losses: 0	
 			};
 		}
-
+		
 		this.database.ref(`openMatches/${matchId}/players/${this.playerId}`).set(this.playerData);
 
 		//Update UI
@@ -407,6 +398,12 @@ class RockPaperScissorsGame {
 			let updates = {};
 			updates[`/players/${this.playerId}`] = null;
 			updates[`/chat/${this.playerId}`] = null;
+
+			if (this.signedIn) {
+				//Update player database with new win/loss record
+				this.database.ref(`users/${this.uid}`).set(this.playerData);	
+			}
+
 			this.database.ref(`openMatches/${this.matchId}`).update(updates);
 		}
 	}
